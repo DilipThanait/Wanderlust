@@ -31,7 +31,7 @@ jobs:
         with:
           context: ./frontend/
           push: true
-          tags: tek2025/wanderlust-frontend-kubernete:2081
+          tags: tek2025/wanderlust-frontend:2081
           
   Backend-Build:
       runs-on: ubuntu-latest
