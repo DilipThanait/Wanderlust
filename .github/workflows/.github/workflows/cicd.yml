@@ -39,7 +39,7 @@ jobs:
         name: Checkout
         uses: actions/checkout@v4
       -
-        name: Set up QEMU
+        name: Set up QEMUgit 
         uses: docker/setup-qemu-action@v3
       -
         name: Set up Docker Buildx
@@ -57,3 +57,54 @@ jobs:
           context: ./backend/
           push: true
           tags: tek2025/wanderlust-git:backend
+      -
+        File-Transfer-dockercompose:
+          name: Copy docker-compose file to server
+          runs-on: ubuntu-latest
+        steps:
+      -  uses: actions/checkout@v4
+      -   name: copy file via ssh password
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.SSH_key }}
+          port: ${{ secrets.PORT }}
+          source: "docker-compose.yaml"
+          target: /home/ubuntu
+
+          File-Transfer-bash-script:
+          name: Copy docker-compose file to server
+          runs-on: ubuntu-latest
+        steps:
+      -  uses: actions/checkout@v4
+      -   name: copy file via ssh password
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.SSH_key }}
+          port: ${{ secrets.PORT }}
+          source: "docker.sh"
+          target: /home/ubuntu
+
+          Docker-login:
+           name: Docker Login
+           runs-on: ubuntu-latest
+           steps:
+           - name: Docker login
+             uses: docker/login-action@v3
+             with:
+               username: ${{ secrets>DOCKERHUB_USERNAME }}
+               password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+          Deploy:
+        - name: mutilple command
+          uses: appleboy/ssh-action@v1
+          with:
+            host: ${{  secrets.HOST  }}
+            username: ${{  secrets.USERNAME  }}
+            key: ${{  secrets.SSH_KEY  }}
+            script: |
+             whoami
+             ls -al
