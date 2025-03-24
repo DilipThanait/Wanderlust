@@ -109,8 +109,11 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.PORT }}
           script: |
+            sudo usermod -aG docker $USER
             chmod +x /home/ubuntu/docker.sh
             bash /home/ubuntu/docker.sh
             docker login -u tek2025 -p ${{ secrets.DOCKERHUB_PASSWORD }}
             docker-compose up -d
             docker system prune -f
+           
+
