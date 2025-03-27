@@ -64,6 +64,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Debug - List files before transfer
+        run: ls -lah
+
+      - name: Debug - Check if docker-compose.yaml exists
+        run: test -f docker-compose.yaml && echo "docker-compose.yaml exists" || echo "docker-compose.yaml is missing!"
+
       - name: Copy docker-compose file via SSH
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -71,8 +77,8 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.PORT }}
-          source: "docker-compose.yaml"
-          target: "/home/ubuntu"
+          source: "./docker-compose.yaml"
+          target: "/home/ubuntu/"
 
   file-transfer-bash-script:
     runs-on: ubuntu-latest
@@ -94,8 +100,8 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.PORT }}
-          source: "docker.sh"
-          target: "/home/ubuntu"
+          source: "./docker.sh"
+          target: "/home/ubuntu/"
 
   deploy:
     runs-on: ubuntu-latest
@@ -109,11 +115,28 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.PORT }}
           script: |
+            echo "🔥 Starting deployment process..."
+            
+            # Add user to Docker group (needs logout/login to take effect)
             sudo usermod -aG docker $USER
+            
+            # Ensure Docker script has correct permissions
             chmod +x /home/ubuntu/docker.sh
+            
+            # Run deployment script
+            echo "🚀 Running deployment script..."
             bash /home/ubuntu/docker.sh
-            docker login -u tek2025 -p ${{ secrets.DOCKERHUB_PASSWORD }}
+            
+            # Authenticate Docker
+            echo "🔑 Logging into Docker Hub..."
+            echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u tek2025 --password-stdin
+            
+            # Start services
+            echo "📦 Starting Docker services..."
             docker-compose up -d
+            
+            # Clean up old Docker images
+            echo "🧹 Cleaning up Docker..."
             docker system prune -f
-           
-
+            
+            echo "✅ Deployment completed successfully!"
