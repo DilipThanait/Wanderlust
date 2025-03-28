@@ -59,7 +59,7 @@ jobs:
 
   file-transfer-docker-compose:
     name: Copy Docker Compose file to server
-   needs: backend-build
+    needs: backend-build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -105,6 +105,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.PORT }}
           script: |
+            chmod +x /home/ubuntu/docker.sh
             bash /home/ubuntu/docker.sh
             echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login --username "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
             docker-compose up -d
