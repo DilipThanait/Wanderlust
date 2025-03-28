@@ -61,46 +61,50 @@ jobs:
     name: Copy Docker Compose file to server
     runs-on: ubuntu-latest
     steps:
-     - users: actions/checkout@v4
-     - name: copy file via ssh password
-     uses: appleboy/scp-action@v0.1.7
-     with:
-     host: ${{ secrets.HOST }}
-     username: ${{ secrets.USERNAME }}
-     key: ${{ secrets.SSH_KEY }}
-     port: ${{ secrets.PORT }}
-     source: "docker-compose.yaml"
-     target: /home/ubuntu/  
-     
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy file via SSH
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.PORT }}
+          source: "docker-compose.yaml"
+          target: "/home/ubuntu/"
+
   file-transfer-bash-script:
-    name: Copy Docker Compose file to server
+    name: Copy Bash Script to Server
     runs-on: ubuntu-latest
     steps:
-     - users: actions/checkout@v4
-     - name: copy file via ssh password
-     uses: appleboy/scp-action@v0.1.7
-     with:
-     host: ${{ secrets.HOST }}
-     username: ${{ secrets.USERNAME }}
-     key: ${{ secrets.SSH_KEY }}
-     port: ${{ secrets.PORT }}
-     source: "docker.sh"
-     target: /home/ubuntu/  
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy file via SSH
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.PORT }}
+          source: "docker.sh"
+          target: "/home/ubuntu/"
 
   deploy:
     name: Deploy Application
     runs-on: ubuntu-latest
     needs: [file-transfer-docker-compose, file-transfer-bash-script]
     steps:
-    - name: Execute remote commands
-    uses: appleboy/ssh-action@v1
-    with:
-     host: ${{ secrets.HOST }}
-     username: ${{ secrets.USERNAME }}
-     key: ${{ secrets.SSH_KEY }}
-     port: ${{ secrets.PORT }}
-     script: |
-     bash /home/ubuntu/docker.sh
-     echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login --username "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-     docker-compose up -d
-     docker system prune -f
+      - name: Execute remote commands
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            bash /home/ubuntu/docker.sh
+            echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login --username "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+            docker-compose up -d
+            docker system prune -f
