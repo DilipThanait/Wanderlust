@@ -64,12 +64,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Debug - List files before transfer
-        run: ls -lah
-
-      - name: Debug - Check if docker-compose.yaml exists
-        run: test -f docker-compose.yaml && echo "docker-compose.yaml exists" || echo "docker-compose.yaml is missing!"
-
       - name: Copy docker-compose file via SSH
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -86,12 +80,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Debug - List files before transfer
-        run: ls -lah
-
-      - name: Debug - Check if docker.sh exists
-        run: test -f docker.sh && echo "docker.sh exists" || echo "docker.sh is missing!"
 
       - name: Copy bash script via SSH
         uses: appleboy/scp-action@v0.1.7
@@ -115,28 +103,9 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.PORT }}
           script: |
-            echo "🔥 Starting deployment process..."
-            
-            # Add user to Docker group (needs logout/login to take effect)
             sudo usermod -aG docker $USER
-            
-            # Ensure Docker script has correct permissions
             chmod +x /home/ubuntu/docker.sh
-            
-            # Run deployment script
-            echo "🚀 Running deployment script..."
             bash /home/ubuntu/docker.sh
-            
-            # Authenticate Docker
-            echo "🔑 Logging into Docker Hub..."
             echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u tek2025 --password-stdin
-            
-            # Start services
-            echo "📦 Starting Docker services..."
             docker-compose up -d
-            
-            # Clean up old Docker images
-            echo "🧹 Cleaning up Docker..."
             docker system prune -f
-            
-            echo "✅ Deployment completed successfully!"
