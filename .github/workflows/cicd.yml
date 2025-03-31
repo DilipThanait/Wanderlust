@@ -29,7 +29,7 @@ jobs:
         with:
           context: ./frontend/
           push: true
-          tags: tek2025/wanderlust-git:frontend
+          tags: tek2025/wanderlust-github:frontend
 
   backend-build:
     runs-on: ubuntu-latest
@@ -55,16 +55,17 @@ jobs:
         with:
           context: ./backend/
           push: true
-          tags: tek2025/wanderlust-git:backend
+          tags: tek2025/wanderlust-github:backend
 
-  file-transfer-dockercompose:
-    runs-on: ubuntu-latest
+  file-transfer-docker-compose:
+    name: Copy Docker Compose file to server
     needs: backend-build
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Copy docker-compose file via SSH
+      - name: Copy file via SSH
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
@@ -72,16 +73,17 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.PORT }}
           source: "docker-compose.yaml"
-          target: "/home/ubuntu"
+          target: "/home/ubuntu/"
 
   file-transfer-bash-script:
+    name: Copy Bash Script to Server
+    needs:   file-transfer-docker-compose
     runs-on: ubuntu-latest
-    needs: file-transfer-dockercompose
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Copy bash script via SSH
+      - name: Copy file via SSH
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
@@ -89,13 +91,14 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.PORT }}
           source: "docker.sh"
-          target: "/home/ubuntu"
+          target: "/home/ubuntu/"
 
   deploy:
+    name: Deploy Application
     runs-on: ubuntu-latest
-    needs: file-transfer-bash-script
+    needs: [file-transfer-docker-compose, file-transfer-bash-script]
     steps:
-      - name: Execute Deployment Commands via SSH
+      - name: Execute remote commands
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HOST }}
@@ -103,8 +106,8 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.PORT }}
           script: |
+            chmod +x /home/ubuntu/docker.sh
             bash /home/ubuntu/docker.sh
-            docker login -u tek2025 -p ${{ secrets.DOCKERHUB_PASSWORD }}
+            echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login --username "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
             docker-compose up -d
             docker system prune -f
-            
